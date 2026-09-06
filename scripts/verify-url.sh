@@ -6,9 +6,9 @@ check_url="${1:-http://127.0.0.1:${check_port}}"
 check_log="/tmp/gate-shift-verify.log"
 
 if [[ "$check_url" == "http://127.0.0.1:${check_port}" ]]; then
-  npm run dev -- --host 127.0.0.1 --port "$check_port" >"$check_log" 2>&1 &
+  setsid npm run dev -- --host 127.0.0.1 --port "$check_port" >"$check_log" 2>&1 &
   check_pid=$!
-  trap 'kill "$check_pid" 2>/dev/null || true' EXIT
+  trap 'kill -- -"$check_pid" 2>/dev/null || true' EXIT
   for _ in $(seq 1 40); do
     if curl --fail --silent "$check_url" >/dev/null; then break; fi
     sleep 0.25

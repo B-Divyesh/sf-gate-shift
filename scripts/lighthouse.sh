@@ -13,9 +13,9 @@ if [[ -z "$lighthouse_browser" ]]; then
 fi
 
 npm run build >/dev/null
-npm run preview -- --host 127.0.0.1 --port "$lighthouse_port" >"$lighthouse_log" 2>&1 &
+setsid npm run preview -- --host 127.0.0.1 --port "$lighthouse_port" >"$lighthouse_log" 2>&1 &
 lighthouse_pid=$!
-trap 'kill "$lighthouse_pid" 2>/dev/null || true' EXIT
+trap 'kill -- -"$lighthouse_pid" 2>/dev/null || true' EXIT
 
 for _ in $(seq 1 40); do
   if curl --fail --silent "$lighthouse_url" >/dev/null; then break; fi
