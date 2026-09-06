@@ -33,7 +33,7 @@ button, a { -webkit-tap-highlight-color: transparent; }
 button:focus-visible, a:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
 h1, h2, h3, p { margin-top: 0; }
 h1, h2, h3 { font-family: "Trebuchet MS", ui-rounded, system-ui, sans-serif; letter-spacing: -.035em; }
-h1 { max-width: 11ch; font-size: clamp(2.35rem, 7vw, 5.55rem); line-height: .94; margin-bottom: 1rem; }
+h1 { max-width: 12ch; font-size: clamp(2.35rem, 4.8vw, 4.3rem); line-height: .96; margin-bottom: 1rem; }
 h2 { font-size: clamp(1.55rem, 3vw, 2.5rem); line-height: 1; margin-bottom: .75rem; }
 h3 { font-size: 1.35rem; line-height: 1.12; }
 main:focus, h1:focus, .end-panel:focus { outline: none; }
@@ -54,7 +54,7 @@ main:focus, h1:focus, .end-panel:focus { outline: none; }
 .demo-banner span { color: var(--muted); font-size: .9rem; }
 .text-button { padding: .55rem .35rem; min-height: 44px; border: 0; border-bottom: 1px solid var(--ring); background: transparent; color: var(--ring); font-weight: 800; }
 
-.first-screen { padding: clamp(1.5rem, 5vw, 4.6rem) 0 2.5rem; display: grid; grid-template-columns: minmax(260px, .75fr) minmax(0, 1.25fr); gap: clamp(1.4rem, 5vw, 4.5rem); align-items: center; min-height: min(760px, calc(100vh - 72px)); }
+.first-screen { padding: clamp(1.5rem, 3vw, 3.25rem) 0 2.5rem; display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(1.25rem, 3vw, 2.5rem); align-items: start; min-height: min(760px, calc(100vh - 72px)); }
 .intro-copy { max-width: 38rem; }
 .eyebrow { margin-bottom: .65rem; color: var(--token-a); font-size: .76rem; font-weight: 850; letter-spacing: .15em; text-transform: uppercase; }
 .intro { max-width: 30rem; color: var(--muted); font-size: clamp(1.05rem, 2vw, 1.23rem); }

@@ -20,6 +20,7 @@ test('the first screen names the play, states three facts, and shows the game', 
   page.on('console', (message) => {
     if (message.type() === 'error') consoleErrors.push(message.text());
   });
+  if (testInfo.project.name === 'desktop') await page.setViewportSize({ width: 1280, height: 720 });
   await page.goto('/');
   await expect(page).toHaveTitle('Gate Shift — rotate rings through gates');
   await expect(page.locator('html')).toHaveAttribute('lang', 'en');
@@ -36,6 +37,23 @@ test('the first screen names the play, states three facts, and shows the game', 
     const boardBox = await page.locator('.first-game').boundingBox();
     expect(factsBox && factsBox.y + factsBox.height).toBeLessThanOrEqual(viewportHeight);
     expect(boardBox?.y).toBeLessThanOrEqual(viewportHeight - 120);
+  } else {
+    const viewportHeight = page.viewportSize()!.height;
+    const firstScreenTargets = [
+      page.getByRole('heading', { level: 1 }),
+      page.locator('.intro'),
+      page.getByRole('button', { name: 'Try it with sample data' }),
+      page.locator('.intro-actions span'),
+      page.locator('.facts'),
+      page.locator('.first-game .game-topline'),
+      page.locator('.first-game .ring').first(),
+    ];
+    for (const target of firstScreenTargets) {
+      const box = await target.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box!.y).toBeGreaterThanOrEqual(0);
+      expect(box!.y + box!.height).toBeLessThanOrEqual(viewportHeight);
+    }
   }
   await page.waitForTimeout(250);
   expect(consoleErrors).toEqual([]);
