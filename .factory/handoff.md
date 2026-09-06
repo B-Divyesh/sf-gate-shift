@@ -1,5 +1,32 @@
 # Gate Shift handoff
 
+## Independent verification 1 — FAIL
+
+Verification date: 2026-09-06. Candidate implementation: `f080a38`.
+Documentation reviewed: `70c00f4`. Full report:
+[`.factory/verification-1.md`](verification-1.md).
+
+The deployed game is playable: clean unit/browser/build gates pass, all 11
+declared claims pass individually, live desktop and phone runs reach real win
+and loss panels, and live Lighthouse is 100/100/100/100. Verification still
+found nine issues, with eight untested public claims:
+
+- the deployment omits `staticwebapp.config.json`, so live CSP,
+  Permissions-Policy, immutable asset caching, and the designed HTTP 404 are
+  absent;
+- mobile header, demo, and footer targets are below 44 px;
+- common actions discard keyboard focus;
+- the brief's pre-move rotation preview is missing;
+- the recorded paid-board difficulty curve does not match solver results and
+  two late boards share one logical start state;
+- eight public claims lack compliant claim entries and exact tagged tests;
+- the three required facts fall below the full game on phone;
+- the named public offer metadata file was absent at verification start; and
+- clean setup reports high and critical development-only advisories.
+
+No product code was changed by the verifier. Evidence screenshots are in
+`.factory/verification-1-evidence/`.
+
 ## Product delivered
 
 Gate Shift is a local-first, one-player browser puzzle. Players rotate six
@@ -18,7 +45,9 @@ layouts, plus one deterministic daily board. Boards 1–3 are free. The complete
 set is a public **$8 one-time** offer for 20 boards; billing registration is
 pending, so there is deliberately no checkout, activation, or entitlement
 claim. Public registration metadata is at
-`/work/.evidence/billing-offer.json` and contains no credentials.
+`/work/.evidence/billing-offer.json` and contains no credentials. This was the
+builder's recorded location; independent verification did not find the file in
+the current evidence directory (V1-08).
 
 ## Product behavior
 
@@ -34,7 +63,10 @@ claim. Public registration metadata is at
 - Every board is BFS-proven to have a route within its displayed budget. The
   visual loop uses a clamped 60 Hz timestep and pauses while hidden.
 
-## Verification
+## Builder verification (historical)
+
+These are the builder's pre-deployment results. They are superseded for
+acceptance by independent verification 1 above.
 
 Implementation candidate: `f080a38` (`feat: build Gate Shift puzzle game`).
 Verification documentation SHA: `12084166ead27afcd2eb5aeb2f90f8225a50ff11`
@@ -68,19 +100,22 @@ Playwright attached first-screen and end-screen evidence to its report.
 ## Accessibility and privacy
 
 The product has semantic header/nav/main/footer landmarks, a skip link, one h1
-per route, visible focus states, native labelled checkboxes, live status text,
-44 px controls, symbol-plus-color states, calm-motion and reduced-motion paths,
-route title changes, and a designed static/SPA 404 recovery. No external
-scripts, fonts, telemetry, user accounts, or game-data requests are used.
+per route, visible focus styles, native labelled checkboxes, live status text,
+symbol-plus-color states, and calm-motion and reduced-motion paths. Independent
+verification found undersized navigation/demo/footer targets and lost keyboard
+focus after re-rendering actions (V1-02 and V1-03).
 
 ## Deployment files
 
-`staticwebapp.config.json` supplies SPA fallback, security headers, CSP,
-robots/sitemap support, and a designed static 404 page. `dist/` is static.
-No SQLite or backend is needed because this product has no shared state.
+The repository contains `staticwebapp.config.json`, but `npm run build` does
+not place it in `dist/`, and the configured headers and designed HTTP 404 are
+not active live (V1-01). No SQLite or backend is needed because this product
+has no shared state.
 
 ## Known gaps and next steps
 
+- Resolve all findings in `.factory/verification-1.md`; the current verdict is
+  FAIL with nine findings and eight untested public claims.
 - Billing registration is the named external dependency. Keep the $8 one-time
   offer and 17 paid-board deliverables, but do not show checkout until the
   factory billing operator provides and tests a real entitlement path.
