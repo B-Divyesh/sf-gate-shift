@@ -48,7 +48,7 @@ From a separate clean clone at `/tmp/gate-shift-clean.cXLrFj`, after `npm ci`:
   entry screen, demo isolation/reset, real UI win end screen, restart,
   keyboard, settings persistence, progress recovery, privacy requests, legal
   routes, 404 recovery, one-time offer status, and axe serious/critical scans.
-- `npm run build` passed and produced `dist/`: 8.01 KB gzip JavaScript and
+- `npm run build` passed and produced `dist/`: 8.04 KB gzip JavaScript and
   3.82 KB gzip CSS in the final measured build.
 - `npm run verify:url` passed: title, `lang=en`, one main, one h1, no missing
   image alt attributes, and zero console errors.
