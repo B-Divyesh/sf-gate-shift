@@ -1,126 +1,137 @@
-# Gate Shift handoff
+# Gate Shift repair 2 handoff
 
-## Independent verification 1 — FAIL
+- Date: 2026-09-06
+- Work order: `gate-shift-repair-2`
+- Live URL: <https://gate-shift.sociobot.in>
+- Live implementation SHA: `90c212baeeff94fd6f413d5b5c889add5ace509c`
+- QA-only commit after the deployed bundle: `52704422a6ea2db2370ba62feadc2ef131d7046f`
 
-Verification date: 2026-09-06. Candidate implementation: `f080a38`.
-Documentation reviewed: `70c00f4`. Full report:
-[`.factory/verification-1.md`](verification-1.md).
+The implementation repairs every finding in
+[`verification-1.md`](verification-1.md). Gate Shift is a deterministic,
+one-player browser puzzle for players who want a finite logic board. The first
+screen says what to play, who it is for, and starts the isolated sample in one
+click. It also shows the three public facts and the playable board on a 390 px
+phone without scrolling.
 
-The deployed game is playable: clean unit/browser/build gates pass, all 11
-declared claims pass individually, live desktop and phone runs reach real win
-and loss panels, and live Lighthouse is 100/100/100/100. Verification still
-found nine issues, with eight untested public claims:
+## What changed
 
-- the deployment omits `staticwebapp.config.json`, so live CSP,
-  Permissions-Policy, immutable asset caching, and the designed HTTP 404 are
-  absent;
-- mobile header, demo, and footer targets are below 44 px;
-- common actions discard keyboard focus;
-- the brief's pre-move rotation preview is missing;
-- the recorded paid-board difficulty curve does not match solver results and
-  two late boards share one logical start state;
-- eight public claims lack compliant claim entries and exact tagged tests;
-- the three required facts fall below the full game on phone;
-- the named public offer metadata file was absent at verification start; and
-- clean setup reports high and critical development-only advisories.
+- Added an explicit long/short route preview. It shows the projected ring and
+  linked-gate states without using a move, then asks the player to apply or
+  cancel it.
+- Replaced repeated/easy board states with 20 unique authored states. Exact
+  solution lengths rise from 6 to 24 moves; later budgets leave one or two
+  spare moves. Every board is solver-checked.
+- Preserved focus across board renders, moved focus into and back out of
+  settings, retained arrow-key operation on ring controls, and made visible
+  phone actions at least 44 by 44 CSS pixels.
+- Kept the game, facts, title, audience, and sample action together on the
+  phone's first screen.
+- Added one outcome-based tagged test for each of 20 public claims. Tests cover
+  real state changes, end screens, recovery, stored state, request traffic,
+  paid locks, controls, symbol cues, pausing, and measured frame rate.
+- Put the deployment configuration in `dist/`. It now supplies CSP,
+  Permissions-Policy, immutable hashed-asset caching, and a branded HTTP 404
+  for missing files.
+- Updated Vite and Vitest. The clean install reports no known vulnerabilities.
+- Kept the researched offer intact: three free boards and 17 paid boards for
+  **$8 USD once**. No subscription or pretend checkout was added.
+- Updated the plain-word copy audit, design record, demo notes, README, legal
+  routes, metadata, scoped asset names, and build validation.
 
-No product code was changed by the verifier. Evidence screenshots are in
-`.factory/verification-1-evidence/`.
+The existing hand-authored SVG and CSS ring system remains the visual source.
+It is original, product-specific, smaller than a generated bitmap, and clearer
+for the game state; no generated image was needed for this repair.
 
-## Product delivered
+## Verification 1 disposition
 
-Gate Shift is a local-first, one-player browser puzzle. Players rotate six
-symbol-marked rings through fixed gates. The short clockwise route reverses a
-linked gate; the long counterclockwise route does not. A board ends in a win or
-loss at its fixed move budget, and undo restores a turn without penalty.
+| Finding | Result | Evidence |
+| --- | --- | --- |
+| V1-01 deployment config absent | Fixed | Config is in `dist`; live security/cache headers pass; missing PNG returns the branded 404 with HTTP 404. |
+| V1-02 small touch targets | Fixed | Phone outcome test measures every visible link and button at 44 px or larger. |
+| V1-03 lost keyboard focus | Fixed | Browser test checks preview/apply focus and settings entry/return focus. |
+| V1-04 no rotation preview | Fixed | Preview test checks both projections, no move use, and the applied state. |
+| V1-05 weak/duplicate paid boards | Fixed | Unit test checks 20 unique starts, exact 6–24 move difficulty, budgets, and solver results. |
+| V1-06 eight untested claims | Fixed | All public claims are represented by 20 unique IDs and exactly one tagged outcome test each. |
+| V1-07 phone facts below game | Fixed | Phone first-screen test checks facts and game before the viewport cutoff. |
+| V1-08 billing metadata absent | Fixed | Public metadata is at `/work/.evidence/billing-offer.json`; it contains no credential. |
+| V1-09 vulnerable toolchain | Fixed | Vite 7.3.6, Vitest 3.2.7, and `npm audit` report zero vulnerabilities. |
 
-The first screen states the job, audience, and first action:
+## Clean setup and automated checks
 
-- Job: **Rotate rings to guide tokens through gates**.
-- Audience: logic-puzzle players who want a short finished board.
-- First action: **Try it with sample data**, which opens `/demo` immediately.
+The final pushed QA revision was cloned from GitHub into
+`/tmp/gate-shift-final.HfV2Om`. From that clean clone:
 
-The game has 20 authored deterministic boards across arc, ladder, and cluster
-layouts, plus one deterministic daily board. Boards 1–3 are free. The complete
-set is a public **$8 one-time** offer for 20 boards; billing registration is
-pending, so there is deliberately no checkout, activation, or entitlement
-claim. Public registration metadata is at
-`/work/.evidence/billing-offer.json` and contains no credentials. This was the
-builder's recorded location; independent verification did not find the file in
-the current evidence directory (V1-08).
+```sh
+npm ci
+npm test
+npm run build
+```
 
-## Product behavior
+- `npm ci`: 164 packages installed; zero vulnerabilities.
+- `npm test`: 6 deterministic engine tests passed.
+- `npm run build`: passed and produced `dist/`, including the deploy config and
+  designed 404. JavaScript is 8,867 bytes gzip; CSS is 3,954 bytes gzip.
+- Every one of the 20 `test` commands in `.factory/claims.json` was then run
+  separately. All 20 commands passed.
+- A final aggregate `npm run test:browser` passed 42 checks with two intended
+  project skips. It covered desktop and Pixel 5 profiles, serious/critical axe
+  scans, 200% text sizing, reduced motion, invalid-storage recovery, legal and
+  unknown routes, keyboard focus, touch size, and deterministic win/loss runs.
+- The phone frame test ran alone with 4x CPU throttling and met the unchanged
+  55 FPS acceptance floor for the stated 60 FPS visual loop.
+- `npm audit --audit-level=high`: zero vulnerabilities.
 
-- Touch, swipe, click, and keyboard work. Up/Down selects a ring, Left/Right
-  takes long/short routes, `U` undoes, and `R` restarts.
-- The app pauses on a hidden tab and saves active progress and settings in
-  browser local storage. Demo data uses only `demo:gate-shift:*`; regular data
-  uses `gate-shift:*`.
-- The demo banner persists, labels the sample run, can reset demo-only storage,
-  and can return to the regular game.
-- There are no accounts, analytics, third-party requests, social ranking,
-  multiplayer, subscriptions, ads, move sales, or endless boards.
-- Every board is BFS-proven to have a route within its displayed budget. The
-  visual loop uses a clamped 60 Hz timestep and pauses while hidden.
+Run the same checks with:
 
-## Builder verification (historical)
+```sh
+npm ci
+npm test
+npm run test:browser
+npm run build
+npm audit --audit-level=high
+```
 
-These are the builder's pre-deployment results. They are superseded for
-acceptance by independent verification 1 above.
+## Live deployment and browser evidence
 
-Implementation candidate: `f080a38` (`feat: build Gate Shift puzzle game`).
-Verification documentation SHA: `12084166ead27afcd2eb5aeb2f90f8225a50ff11`
-(`docs: record Gate Shift verification`).
+The static bundle from implementation `90c212b` was deployed to the existing
+one-product Static Web App. Final deployment ID:
+`65cd4fad-c0d4-4735-8efa-50228a88658a`. The final hashed script is
+`/assets/index-DAFWFK5I.js`.
 
-From a separate clean clone at `/tmp/gate-shift-clean.cXLrFj`, after `npm ci`:
+Cold HTTPS verification found:
 
-- `npm test` passed: 7 deterministic engine tests, including all 20 solver
-  proofs and a scripted win.
-- `npm run test:browser` passed: 20 desktop/Pixel 5 browser tests. It covers
-  entry screen, demo isolation/reset, real UI win end screen, restart,
-  keyboard, settings persistence, progress recovery, privacy requests, legal
-  routes, 404 recovery, one-time offer status, and axe serious/critical scans.
-- `npm run build` passed and produced `dist/`: 8.04 KB gzip JavaScript and
-  3.82 KB gzip CSS in the final measured build.
-- `npm run verify:url` passed: title, `lang=en`, one main, one h1, no missing
-  image alt attributes, and zero console errors.
-- `npm run test:lighthouse` passed locally with Performance 100,
-  Accessibility 100, Best Practices 100, and SEO 100.
-- All commands in `.factory/claims.json` were run individually. The 60-fps
-  claim passed under the Pixel 5 profile with 4× CPU throttling, using a
-  two-second `requestAnimationFrame` sample and a 55-fps lower margin.
-- `npm audit --omit=dev` reported zero production dependency vulnerabilities.
+- root HTTP 200; title, `lang=en`, one main, one h1, alt text, and zero console
+  errors pass `npm run verify:url -- https://gate-shift.sociobot.in`;
+- CSP and Permissions-Policy are present;
+- the hashed script uses `public, max-age=31536000, immutable`;
+- a random missing PNG returns HTTP 404 and the title
+  `Page not found — Gate Shift`;
+- fresh desktop and phone clients entered the one-click sample, kept its
+  persistent label, previewed without spending a move, and retained focus;
+- hints drove Board 3 to a real win on desktop and phone; Board 1 reached a
+  real loss, and restart/undo recovery worked;
+- only same-origin requests were observed and both clients logged zero console
+  errors;
+- mobile Lighthouse: Performance 100, Accessibility 100, Best Practices 100,
+  SEO 100; LCP 0.9 s, CLS 0, total blocking time 50 ms.
 
-Visual inspection used fresh desktop and Pixel 5 browser contexts. The root
-phone screen shows the job, primary sample action, and live board before
-scrolling. The demo phone view has its persistent sample banner. A scripted
-Board 3 run reached the real completion panel in both desktop and phone tests;
-Playwright attached first-screen and end-screen evidence to its report.
+Screenshots are in [`repair-2-evidence`](repair-2-evidence/): desktop and
+phone first screens, desktop route preview, desktop win/loss, and phone win.
 
-## Accessibility and privacy
+## Offer and remaining dependency
 
-The product has semantic header/nav/main/footer landmarks, a skip link, one h1
-per route, visible focus styles, native labelled checkboxes, live status text,
-symbol-plus-color states, and calm-motion and reduced-motion paths. Independent
-verification found undersized navigation/demo/footer targets and lost keyboard
-focus after re-rendering actions (V1-02 and V1-03).
+Billing registration remains an external operator dependency. The live page
+accurately describes the complete $8 USD one-time offer and keeps Boards 4–20
+locked. It does not display checkout, claim activation, or claim entitlement.
+The operator metadata at `/work/.evidence/billing-offer.json` records the exact
+origin, price evidence, paid deliverables, and the currently unavailable
+license-validation path. The free three-board game and demo work without it.
 
-## Deployment files
+There is no backend, account, multiplayer mode, shared state, or public offline
+promise, so SQLite, room persistence, restart persistence, health, and 429
+checks do not apply. A conservative service worker caches the same-origin shell
+but is not marketed as guaranteed offline support.
 
-The repository contains `staticwebapp.config.json`, but `npm run build` does
-not place it in `dist/`, and the configured headers and designed HTTP 404 are
-not active live (V1-01). No SQLite or backend is needed because this product
-has no shared state.
-
-## Known gaps and next steps
-
-- Resolve all findings in `.factory/verification-1.md`; the current verdict is
-  FAIL with nine findings and eight untested public claims.
-- Billing registration is the named external dependency. Keep the $8 one-time
-  offer and 17 paid-board deliverables, but do not show checkout until the
-  factory billing operator provides and tests a real entitlement path.
-- No public offline promise is made. A conservative same-origin service worker
-  is included for shell caching, but offline behavior is not marketed as a
-  guaranteed claim.
-- Post-deploy, repeat the fresh HTTPS desktop and phone smoke test and retain
-  the deployment SHA in the factory release record.
+The catalog description is 83 characters, starts with a verb, and is identical
+in `.factory/catalog-description.txt` and
+`/work/.evidence/catalog-description.txt`.
