@@ -1,9 +1,9 @@
-# Gate Shift verification 4 handoff
+# Gate Shift review 4 handoff
 
 - Date: 2026-09-06
-- Work order: `gate-shift-verify-4`
+- Work order: `gate-shift-review-4`
 - Implementation candidate: `515899a533e8519d1b7016eced5b764dcb4d6370`
-- Documentation head reviewed: `9fc7223a4ae7de9bd934012e555db09c8d003dd9`
+- Documentation head reviewed: `9a2904d0f1ee827d8d6ec512c9e42816ab6572f6`
 - Live URL: <https://gate-shift.sociobot.in>
 - Verdict: **PASS**
 - Findings: **0**
@@ -11,48 +11,34 @@
 
 ## What was done
 
-Gate Shift received a fresh independent verification. No product code was
-changed. The live game was opened in new desktop and Pixel 5 clients, the
-one-click sample was reset and discarded, and clean sample re-entry preserved
-regular storage. Fresh runs reached real win and loss screens and exercised
-undo and restart recovery.
+No product code changed. A fresh clone received `npm ci`; all declared claim commands ran individually, followed by the complete unit, browser, build, audit, URL, and Lighthouse checks. Fresh live desktop and Pixel 5 clients opened the game, used the one-click sample, reset and discarded it, and reached real win and loss screens. Live accessibility, privacy, route, header, reduced-motion, asset-identity, and frame-rate checks passed.
 
-Every declared claim command ran separately after a clean install. Unit,
-browser, build, audit, URL, accessibility, privacy, route, metadata, link,
-Lighthouse, reduced-motion, 200% text, touch-target, keyboard, focus, history,
-daily-board, and live asset-identity checks passed.
+The full result is [.factory/review-4.md](review-4.md). Current screenshots are in `.factory/review-4-evidence/`.
 
-The full report is [.factory/verification-4.md](verification-4.md). Fresh
-screenshots are in `.factory/verification-4-evidence/`.
+## How to run and verify
 
-## Key verification results
+```sh
+npm ci
+npm test
+npm run test:browser
+npm run build
+npm run verify:url -- https://gate-shift.sociobot.in
+npm run test:lighthouse
+```
 
+Each command in `.factory/claims.json` is also runnable separately after `npm ci`.
+
+## Key results
+
+- All 20 claim commands passed separately; each claim has one exact test tag.
 - `npm test`: 6/6 passed.
-- All 20 claim commands: passed separately.
-- `npm run test:browser`: 42 passed, 2 expected cross-profile skips.
-- `npm run build`: passed; 8,926 gzip bytes JS and 3,959 gzip bytes CSS.
+- `npm run test:browser`: 42 passed and 2 expected cross-profile skips.
+- `npm run build`: 8,926 gzip bytes JavaScript and 3,959 gzip bytes CSS.
 - `npm audit --audit-level=high`: zero vulnerabilities.
-- Live Lighthouse: 100 performance, 100 accessibility, 100 best practices,
-  and 100 SEO; 846 ms LCP, zero CLS, 67 ms total blocking time.
-- Live Pixel 5 at 4× CPU throttle: 60.23 FPS.
-- Live requests during play: same-origin GETs only; zero cookies and zero
-  console or page errors.
-- Live and candidate JavaScript and CSS SHA-256 values match exactly.
-
-## Evidence
-
-- `sf-gate-shift-verification-4-live-desktop-first-screen.png`
-- `sf-gate-shift-verification-4-live-desktop-demo.png`
-- `sf-gate-shift-verification-4-live-desktop-demo-preview.png`
-- `sf-gate-shift-verification-4-live-desktop-win.png`
-- `sf-gate-shift-verification-4-live-desktop-loss.png`
-- `sf-gate-shift-verification-4-live-phone-first-screen.png`
-- `sf-gate-shift-verification-4-live-phone-win.png`
-- `sf-gate-shift-verification-4-live-http-404.png`
+- Local Lighthouse: 99 performance, 100 accessibility, 100 best practices, and 100 SEO.
+- Live Pixel 5 at 4× CPU throttle: 60.15 FPS.
+- Candidate and live JS/CSS SHA-256 values match exactly.
 
 ## Remaining external dependency
 
-Billing registration remains pending. The complete public offer is still
-accurately disclosed as 20 authored boards for **$8 once**, with three free
-boards, 17 paid boards, and no subscription. No checkout, activation, or
-entitlement-success claim is made.
+Billing registration is pending. The game accurately states three free boards, 20 total boards for **$8 once**, 17 paid boards, and no subscription, ads, or move sales. It does not claim checkout, activation, or entitlement success.
