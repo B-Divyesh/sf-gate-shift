@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Gate Shift mark">
+  <rect width="64" height="64" rx="14" fill="#10242b"/>
+  <circle cx="32" cy="32" r="19" fill="none" stroke="#f3df9e" stroke-width="7"/>
+  <path d="M32 9v11M55 32H44" stroke="#ff7657" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="32" cy="32" r="5" fill="#76d2c4"/>
+</svg>

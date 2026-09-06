@@ -1,0 +1,27 @@
+{
+  "name": "gate-shift",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A deterministic browser puzzle about rotating rings through gates.",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test": "npm run test:unit",
+    "test:unit": "vitest run",
+    "test:browser": "playwright test",
+    "test:claims": "playwright test --grep @claim",
+    "verify:url": "bash scripts/verify-url.sh",
+    "test:lighthouse": "bash scripts/lighthouse.sh"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.11.0",
+    "@playwright/test": "1.58.2",
+    "@types/node": "24.10.1",
+    "lighthouse": "^13.4.1",
+    "typescript": "5.9.3",
+    "vite": "7.1.11",
+    "vitest": "3.2.4"
+  }
+}

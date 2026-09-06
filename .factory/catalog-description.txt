@@ -1,0 +1,1 @@
+Rotate rings to guide tokens through gates in short, finite browser puzzle boards.
