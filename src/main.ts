@@ -268,6 +268,7 @@ const gameBoard = (): string => {
       <div class="run-stats" aria-label="Run status"><strong>${run.movesLeft}</strong><span>moves left</span><strong>${clearedGates(run.state)}/6</strong><span>gates clear</span></div>
     </div>
     <p class="board-rule"><span aria-hidden="true">↻</span> Short route turns clockwise and reverses its linked gate. <span aria-hidden="true">↺</span> Long route leaves gates unchanged.</p>
+    ${preview}
     <div class="board" aria-describedby="board-help">
       ${Array.from({ length: 6 }, (_, ring) => ringMarkup(ring, previewState)).join('')}
     </div>
@@ -282,7 +283,6 @@ const gameBoard = (): string => {
       <button type="button" data-action="pause" ${run.status !== 'active' ? 'disabled' : ''}>${state.paused ? 'Resume board' : 'Pause board'}</button>
       <button type="button" data-action="settings" aria-expanded="${state.settingsOpen}" aria-controls="settings-panel">Settings</button>
     </div>
-    ${preview}
     ${hint}
     <p class="status-line" role="status">${state.announcement || statusText(run)}</p>
     ${state.settingsOpen ? settingsPanel() : ''}
