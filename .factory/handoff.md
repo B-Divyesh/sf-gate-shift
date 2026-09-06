@@ -37,7 +37,8 @@ claim. Public registration metadata is at
 ## Verification
 
 Implementation candidate: `f080a38` (`feat: build Gate Shift puzzle game`).
-The documentation verification SHA is recorded in the follow-up handoff commit.
+Verification documentation SHA: `12084166ead27afcd2eb5aeb2f90f8225a50ff11`
+(`docs: record Gate Shift verification`).
 
 From a separate clean clone at `/tmp/gate-shift-clean.cXLrFj`, after `npm ci`:
 
