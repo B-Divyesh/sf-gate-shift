@@ -1,60 +1,82 @@
-# Gate Shift review 1 handoff
+# Gate Shift repair 3 handoff
 
 - Date: 2026-09-06
-- Work order: `gate-shift-review-1`
-- Verdict: **FAIL**
-- Findings: **1**
-- Untested public claims: **0**
+- Work order: `gate-shift-repair-3`
+- Implementation: `472f8cca5b863a62186b851414a6a4d9b2d8a74e`
+- Previous documentation head: `6415aae02f56ede0eb88ca3ecd10695e344d44c8`
 - Live URL: <https://gate-shift.sociobot.in>
-- Implementation reviewed: `90c212baeeff94fd6f413d5b5c889add5ace509c`
-- Documentation head reviewed: `23a1cc78281120492a5ac848de241b77894af30f`
-- Full report: [`review-1.md`](review-1.md)
-- Evidence: [`review-1-evidence`](review-1-evidence/)
 
-## What was done
+## What changed
 
-This was an independent strict review. No product code was changed. A fresh
-GitHub checkout at `23a1cc7` was installed with `npm ci`; all 20 declared
-claim commands were run separately and passed. The unit suite, full browser
-suite, production build, audit, live URL check, live route/header checks,
-live axe scans, and local Lighthouse check passed.
+The desktop first screen now has a wider copy column, a smaller three-line
+title, and top-aligned copy beside the live board. At 1280×720, the title,
+audience, sample action and explanation, all three facts, the game heading,
+and the first playable ring fit before scrolling. The title remains **Rotate
+rings to guide tokens through gates**.
 
-Fresh desktop and Pixel 5 browser clients entered the real one-click sample,
-checked its persistent label, preview, and reset, completed Board 3 through
-visible controls, and reached a real loss followed by undo recovery. The
-current live assets match the clean candidate build byte for byte.
+The browser suite now measures that exact desktop outcome. It checks real
+element bounds at 1280×720 instead of checking only that the content exists.
+The phone first-screen check remains in place.
 
-## Finding
+Fresh candidate evidence is in
+[`repair-3-evidence`](repair-3-evidence/): desktop and phone first screens,
+an actual Board 3 win, and a Board 1 loss. The one-click sample was entered,
+labelled, reset, and kept separate from regular browser storage during the
+claim tests.
 
-R1-01 is a major desktop first-screen failure. At 1280 by 720, the h1 is 501
-pixels tall and pushes the audience, primary **Try it with sample data**
-action, and three required facts below the fold. The phone first screen fits
-all of this content; desktop does not. The repair must fit the job, audience,
-action, facts, and visible game content into the desktop first screen, with a
-viewport-bound desktop test to prevent recurrence.
+## Verification
 
-## How to verify after repair
+Fresh GitHub clone at implementation `472f8cc`:
 
 ```sh
 npm ci
+```
+
+installed 164 packages with zero audit vulnerabilities. All 20 commands in
+`.factory/claims.json` then passed separately, with status-only logs stored in
+the verification environment. The full local checks also passed:
+
+```sh
 npm test
 npm run test:browser
 npm run build
 npm audit --audit-level=high
-npm run verify:url -- https://gate-shift.sociobot.in
+npm run verify:url
 npm run test:lighthouse
 ```
 
-Also rerun every `test` entry in `.factory/claims.json` separately from a
-fresh checkout. On a fresh 1280 by 720 desktop browser, verify that the title,
-audience, sample action with its explanation, all three facts, and meaningful
-game content are visible before scrolling. Then rerun the phone first-screen,
-demo/reset, win, loss/recovery, legal, 404, axe, and live privacy checks.
+Results: 6 unit tests passed; 42 browser tests passed with 2 intended project
+skips; build output includes the static deployment config and designed HTTP
+404; audit found zero vulnerabilities; URL structure and console check passed;
+Lighthouse scored 98 performance, 100 accessibility, 100 best practices, and
+100 SEO. Built gzip sizes are 8,867 bytes JavaScript and 3,959 bytes CSS.
 
-## Known external dependency
+The desktop browser measurement recorded these bottom edges in the 720-pixel
+viewport: title 316, audience 391, sample action 462, action explanation 448,
+facts 562, game heading 200, and first ring 458. The real Board 3 run reached
+the completion panel in 8 of 12 moves. Board 1 exhausted its 10 moves and
+reached the loss panel.
 
-Billing registration remains pending outside this repository. This is not the
-review failure: the page accurately presents the complete 20-board set at $8
-once, keeps the 17 paid boards locked, and does not claim checkout or
-activation success. There is no backend, account, multiplayer, or SQLite
-surface to verify.
+## Earlier finding disposition
+
+- R1-01 desktop first-screen content below the fold: fixed by the layout
+  change and viewport-bound outcome test.
+- V1-01 through V1-09 remain fixed: deployment configuration and designed
+  404, 44-pixel touch targets, keyboard focus, previews, 20 unique solvable
+  boards, complete claim coverage, phone facts, public offer metadata, and
+  dependency audit all remain covered by the passing suites.
+
+## Delivery and known external dependency
+
+Implementation `472f8cc` was pushed to `main` for static deployment. The
+factory owns the deployment runtime; no infrastructure configuration was
+changed. The public complete-set offer remains **$8 USD once** for all 20
+authored boards, with the 17 additional boards locked while billing
+registration is pending. Public status-only metadata is at
+`/work/.evidence/billing-offer.json`. There is no checkout, entitlement, or
+activation claim. The copied catalog description is at
+`/work/.evidence/catalog-description.txt`.
+
+The game is static and one-player, so backend, tenant, SQLite, health, and
+rate-limit checks do not apply. Multiplayer is not advertised. No paid
+deliverable was removed or made free.

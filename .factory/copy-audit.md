@@ -1,6 +1,6 @@
 # Landing-page copy audit
 
-Checked 2026-09-06 after repair 2. The landing page uses **ring**, **gate**,
+Checked 2026-09-06 after repair 3. The landing page uses **ring**, **gate**,
 **token**, **board**, **move budget**, **short route**, **long route**, and
 **preview** consistently. No banned plain-words terms appear. All sentences
 stay below the 22-word limit.

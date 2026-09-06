@@ -36,6 +36,12 @@ controls. No font files or font CDNs load. Spacing follows a 4/8 px rhythm.
 The game uses circles, brackets, thin grid marks, and offset hard shadows;
 information sections use open space rather than repeated feature cards.
 
+On desktop, the first screen uses a 0.9:1.1 copy-to-board split. The title is
+capped at 4.3 rem and the copy starts at the top of the live board rather than
+centering against its full height. This keeps the job, audience, sample action,
+three facts, and visible rings inside a 1280×720 first viewport without hiding
+the board behind a landing-page hero.
+
 ## Interaction and motion
 
 Selecting a ring gives it a coral outline. Players preview either route before
