@@ -4,6 +4,9 @@ export default defineConfig({
   testDir: './tests/browser',
   timeout: 30_000,
   fullyParallel: false,
+  // Performance claims need an uncontended browser process. Running the
+  // desktop and throttled-phone projects together distorts frame timing.
+  workers: 1,
   reporter: [['list'], ['html', { outputFolder: 'playwright-report', open: 'never' }]],
   use: {
     baseURL: 'http://127.0.0.1:4173',
