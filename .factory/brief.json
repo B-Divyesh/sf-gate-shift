@@ -1,0 +1,32 @@
+{
+  "slug": "gate-shift",
+  "title": "Gate Shift",
+  "territory": "games-creative",
+  "user": "Players seeking a tactile, original, browser-friendly logic puzzle with a satisfying finite run rather than a familiar word, merge, or match-three loop.",
+  "evidence": [
+    {
+      "url": "https://hn.algolia.com/api/v1/items/49274075",
+      "date": "2026-08-12",
+      "quote_or_summary": "A detailed beta request presents a new grid slider in which rotating rows and columns through fixed gates creates, changes, or removes tiles, with scoring based on empty space and moves left."
+    },
+    {
+      "url": "https://itch.io/t/6647626/malik-free-browser-multiplayer-maze-shooter-pvp-bouncing-bullets-territory-control",
+      "date": "2026-07-19",
+      "quote_or_summary": "A 2026 itch.io browser-game release frames a small original interaction\u2014bouncing bullets and territory control\u2014as immediately playable in the browser rather than an install."
+    }
+  ],
+  "recurrence": "The first thread is a concrete request for feedback on a nonstandard grid mechanic; the second shows indie creators are still bringing compact, mechanic-led games to the browser in 2026.",
+  "current_workaround": "Play polished but repetitive word/merge games, download an experimental mobile beta, or use puzzle apps that blend finite boards into endless retention loops.",
+  "incumbents_and_gap": "Threes/2048, sliding blocks, and match games own familiar operations, but they rarely give a short authored campaign with reversible state and an explicit finish. Existing puzzle apps also commonly put experimental games behind an install.",
+  "smallest_useful_product": "A browser puzzle about rotating six conveyor rings through fixed color gates. A level takes 4\u201310 minutes and ends after a fixed move budget; every rotation can be previewed, but choosing a shortcut changes future gate polarity. Each run draws one of three deterministic board layouts and a daily challenge. Inputs: swipe, arrows, undo. Non-goals: procedurally infinite boards, match-three monetization, copied mechanics/art, and social ranking in v1.",
+  "success_measure": "At least 50% of players finish the tutorial board, 25% complete three boards, and the median session reaches a deliberate level ending rather than a quit.",
+  "artifact_class": "browser-game",
+  "monetization": "one-time \u2014 a finite set of authored puzzles is a cleaner fit than ads or move sales.",
+  "constraints": "Puzzle generator must prove target levels solvable; offer undo without penalty; respect reduced-motion settings and make color nonessential through symbols.",
+  "est_build_effort": "M",
+  "scale": "small",
+  "why_distinct": "The interesting unit is reversible gate-state planning with a hard ending, not another tile-merging or generic slider clone.",
+  "confidence": 3,
+  "state": "RESEARCHED",
+  "research_run": "research-browser-games-0901-204312-1"
+}
