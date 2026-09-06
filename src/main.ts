@@ -58,6 +58,18 @@ const safeWrite = (demo: boolean, key: string, value: unknown): void => {
   }
 };
 
+const clearDemoStorage = (): void => {
+  try {
+    const demoPrefix = `${namespace(true)}:`;
+    for (let index = localStorage.length - 1; index >= 0; index -= 1) {
+      const key = localStorage.key(index);
+      if (key?.startsWith(demoPrefix)) localStorage.removeItem(key);
+    }
+  } catch {
+    // The regular game remains available if private browsing blocks local storage.
+  }
+};
+
 const getLevel = (id: string): Level | undefined => {
   if (!id.startsWith('daily-')) return authoredLevels.find((level) => level.id === id);
   const daily = getDailyLevel();
@@ -348,7 +360,7 @@ const legalPage = (kind: 'privacy' | 'terms'): string => {
   const privacy = kind === 'privacy';
   return `${nav()}<main id="main" tabindex="-1" class="legal-page"><p class="eyebrow">Gate Shift</p><h1 tabindex="-1">${privacy ? 'Privacy for Gate Shift players' : 'Terms for Gate Shift players'}</h1>${privacy ? `
     <p>Gate Shift runs in your browser. It does not use analytics, accounts, advertising, or tracking cookies.</p>
-    <h2>What stays on your device</h2><p>Your current board, settings, and free-board progress are saved in local browser storage when available. Demo runs use a separate storage key and never read or change your regular game data.</p>
+    <h2>What stays on your device</h2><p>Your current board, settings, and free-board progress use local browser storage when it is available. Demo runs use separate storage. They never read or change regular game data. Start for real discards the demo storage.</p>
     <h2>What leaves your device</h2><p>No game data leaves your browser. Static files load from the Gate Shift site so the game can open.</p>
     <h2>Delete local data</h2><p>Use your browser’s site-data controls for gate-shift.sociobot.in. In demo mode, select Reset demo.</p>` : `
     <p>Gate Shift is a browser game for general audiences. By playing, you agree to use it lawfully and not attempt to disrupt the service.</p>
@@ -395,13 +407,15 @@ const showPreview = (direction: Direction): void => {
 };
 
 const resetDemo = (): void => {
-  try {
-    localStorage.removeItem(storageKey(true, 'run'));
-    localStorage.removeItem(storageKey(true, 'settings'));
-  } catch { /* Keep the visible run if storage is blocked. */ }
+  clearDemoStorage();
   state = initialState(true);
   state.announcement = 'Demo reset to the guided practice board.';
   render('[data-action="reset-demo"]');
+};
+
+const startForReal = (): void => {
+  clearDemoStorage();
+  navigate('/');
 };
 
 const showHint = (): void => {
@@ -457,7 +471,7 @@ const bindEvents = (): void => {
   root.querySelectorAll<HTMLButtonElement>('[data-action]').forEach((button) => button.addEventListener('click', () => {
     switch (button.dataset.action) {
       case 'try-demo': navigate('/demo'); break;
-      case 'start-real': navigate('/'); break;
+      case 'start-real': startForReal(); break;
       case 'reset-demo': resetDemo(); break;
       case 'preview-clockwise': showPreview('clockwise'); break;
       case 'preview-counterclockwise': showPreview('counterclockwise'); break;

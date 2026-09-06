@@ -5,6 +5,8 @@ finite board instead of an endless loop. Rotate six token rings through fixed
 gates, preview linked gate reversals, use undo without penalty, and finish
 before the move budget ends.
 
+Each board is designed to take 4–10 minutes.
+
 Live: <https://gate-shift.sociobot.in>
 
 ## Who it is for
@@ -38,7 +40,8 @@ or claimed to work.
 Use **Try it with sample data** or open `/demo`. It starts a guided `First
 signal` board in a separate `demo:gate-shift:*` browser-storage namespace.
 The visible demo banner says that sample data is not saved. It offers **Reset
-demo** and **Start for real**. See
+demo** and **Start for real**, which discards sample storage before returning to
+the regular game. See
 [.factory/demo.md](.factory/demo.md) for the sandbox contract.
 
 ## Develop

@@ -60,13 +60,14 @@ test('the first screen names the play, states three facts, and shows the game', 
   await testInfo.attach('first-screen', { body: await page.screenshot(), contentType: 'image/png' });
 });
 
-test('@claim:demo-isolated opens, labels, resets, and leaves regular storage unchanged', async ({ page }) => {
+test('@claim:demo-isolated opens, labels, resets, discards demo storage on exit, and leaves regular storage unchanged', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => localStorage.setItem('gate-shift:sentinel', 'regular-data'));
   await page.getByRole('button', { name: 'Try it with sample data' }).click();
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.getByLabel('Demo mode')).toContainText('Demo — sample data, nothing is saved');
   const before = await movesLeft(page).textContent();
+  const startingState = await page.locator('.ring').evaluateAll((rings) => rings.map((ring) => `${ring.getAttribute('data-angle')}:${ring.getAttribute('data-gate')}`));
   await previewAndTake(page, 'clockwise');
   await expect(movesLeft(page)).not.toHaveText(before ?? '');
   const storage = await page.evaluate(() => ({
@@ -80,9 +81,28 @@ test('@claim:demo-isolated opens, labels, resets, and leaves regular storage unc
   await page.getByRole('button', { name: 'Reset demo' }).click();
   await expect(movesLeft(page)).toHaveText(before ?? '');
   expect(await page.evaluate(() => localStorage.getItem('gate-shift:sentinel'))).toBe('regular-data');
+  await previewAndTake(page, 'counterclockwise');
+  const demoKeysBeforeExit = await page.evaluate(() => Object.keys(localStorage)
+    .filter((key) => key.startsWith('demo:gate-shift:')).sort());
+  expect(demoKeysBeforeExit).toEqual(expect.arrayContaining([
+    'demo:gate-shift:run',
+    'demo:gate-shift:settings',
+  ]));
   await page.getByRole('button', { name: 'Start for real' }).click();
   await expect(page).toHaveURL(/\/$/);
   await expect(page.getByLabel('Demo mode')).toHaveCount(0);
+  const afterExit = await page.evaluate(() => ({
+    demoKeys: Object.keys(localStorage).filter((key) => key.startsWith('demo:gate-shift:')),
+    regularRun: localStorage.getItem('gate-shift:run'),
+    sentinel: localStorage.getItem('gate-shift:sentinel'),
+  }));
+  expect(afterExit.demoKeys).toEqual([]);
+  expect(afterExit.regularRun).toBeNull();
+  expect(afterExit.sentinel).toBe('regular-data');
+  await page.getByRole('button', { name: 'Try it with sample data' }).click();
+  await expect(page).toHaveURL(/\/demo$/);
+  await expect(movesLeft(page)).toHaveText(before ?? '');
+  expect(await page.locator('.ring').evaluateAll((rings) => rings.map((ring) => `${ring.getAttribute('data-angle')}:${ring.getAttribute('data-gate')}`))).toEqual(startingState);
 });
 
 test('@claim:route-preview previews both outcomes without spending a move, then applies the shown state', async ({ page }) => {

@@ -11,5 +11,5 @@ mouse, or keyboard.
 Demo progress is stored only under the `demo:gate-shift:*` local-storage
 namespace. Regular game progress uses `gate-shift:*`; demo mode never reads or
 writes it. The persistent banner reads **Demo — sample data, nothing is
-saved**. **Reset demo** discards only the demo namespace. **Start for real**
-returns to the regular game.
+saved**. **Reset demo** discards only the complete demo namespace. **Start for
+real** also discards that namespace before returning to the regular game.

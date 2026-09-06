@@ -1,10 +1,10 @@
 [
   {
     "id": "demo-isolated",
-    "claim": "Try it with sample data opens a labelled sample run that can be reset without changing regular data.",
+    "claim": "Try it with sample data opens a labelled sample run that can be reset or discarded on exit without changing regular data.",
     "where": "First-screen action, demo banner, README",
     "test": "npm run test:browser -- --grep @claim:demo-isolated",
-    "sandbox": "Fresh browser context with a regular-data sentinel; enter /demo, play, reset, leave demo, and compare both storage namespaces."
+    "sandbox": "Fresh browser context with a regular-data sentinel; enter /demo, play, reset, play again, leave demo, require the complete demo namespace to be absent, re-enter /demo clean, and compare both storage namespaces."
   },
   {
     "id": "route-preview",
