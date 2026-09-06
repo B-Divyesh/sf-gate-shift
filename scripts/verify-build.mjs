@@ -13,6 +13,8 @@ if (!config.globalHeaders?.['Content-Security-Policy'] || !config.globalHeaders?
 }
 const immutableAssets = config.routes?.some((route) => route.route === '/assets/*' && /immutable/.test(route.headers?.['Cache-Control'] ?? ''));
 if (!immutableAssets) throw new Error('The deploy artifact is missing immutable caching for hashed assets.');
+const staticMissesReach404 = config.navigationFallback?.exclude?.some((pattern) => pattern.includes('png') && pattern.includes('svg'));
+if (!staticMissesReach404) throw new Error('Unknown static files would fall through to the SPA instead of the designed HTTP 404.');
 
 const assets = await readdir('dist/assets');
 let jsGzip = 0;

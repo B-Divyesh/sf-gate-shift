@@ -15,7 +15,7 @@
   ],
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "/sf-gate-shift-*", "/404.css", "/404.html", "/robots.txt", "/sitemap.xml", "/sw.js", "/staticwebapp.config.json"]
+    "exclude": ["/assets/*", "/*.{css,js,png,jpg,jpeg,gif,svg,webp,avif,ico,woff,woff2,json,txt,xml,wasm,map}"]
   },
   "responseOverrides": {
     "404": { "rewrite": "/404.html", "statusCode": 404 }
