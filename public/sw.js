@@ -1,12 +1,15 @@
-const CACHE = 'gate-shift-shell-v1';
+const CACHE = 'gate-shift-shell-v2';
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['/', '/index.html', '/favicon.svg'])));
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(['/', '/index.html', '/sf-gate-shift-favicon.svg'])));
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(Promise.all([
+    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key)))),
+    self.clients.claim(),
+  ]));
 });
 
 self.addEventListener('fetch', (event) => {

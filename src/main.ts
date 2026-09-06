@@ -1,9 +1,12 @@
 import './styles.css';
 import {
   FixedStepper,
+  LINKED_GATE,
+  applyMove,
   authoredLevels,
   chooseRing,
   clearedGates,
+  type Direction,
   formatDirection,
   getDailyLevel,
   type GameRun,
@@ -25,6 +28,7 @@ type AppState = {
   settings: Settings;
   paused: boolean;
   settingsOpen: boolean;
+  preview: Direction | null;
   hint: string;
   announcement: string;
 };
@@ -54,23 +58,38 @@ const safeWrite = (demo: boolean, key: string, value: unknown): void => {
   }
 };
 
-const getLevel = (id: string): Level | undefined =>
-  id.startsWith('daily-') ? getDailyLevel() : authoredLevels.find((level) => level.id === id);
+const getLevel = (id: string): Level | undefined => {
+  if (!id.startsWith('daily-')) return authoredLevels.find((level) => level.id === id);
+  const daily = getDailyLevel();
+  return daily.id === id ? daily : undefined;
+};
+
+const validPuzzleState = (candidate: unknown): candidate is GameRun['state'] => {
+  if (!candidate || typeof candidate !== 'object') return false;
+  const value = candidate as GameRun['state'];
+  return Array.isArray(value.angles)
+    && value.angles.length === 6
+    && value.angles.every((angle) => Number.isInteger(angle) && angle >= 0 && angle <= 3)
+    && Array.isArray(value.gates)
+    && value.gates.length === 6
+    && value.gates.every((gate) => gate === 0 || gate === 1);
+};
 
 const validRun = (candidate: PersistedRun | null, demo: boolean): GameRun | null => {
-  if (!candidate || !Array.isArray(candidate.state?.angles) || !Array.isArray(candidate.state?.gates)) return null;
+  if (!candidate || !validPuzzleState(candidate.state)) return null;
   const level = getLevel(candidate.levelId);
   if (!level || (!demo && !level.free && !level.daily)) return null;
-  if (candidate.state.angles.length !== 6 || candidate.state.gates.length !== 6) return null;
   if (!Number.isInteger(candidate.movesLeft) || candidate.movesLeft < 0 || candidate.movesLeft > level.budget) return null;
   if (!['active', 'won', 'lost'].includes(candidate.status as RunStatus)) return null;
+  if (!Array.isArray(candidate.history) || !candidate.history.every(validPuzzleState)) return null;
+  if (!Number.isInteger(candidate.selectedRing) || candidate.selectedRing < 0 || candidate.selectedRing >= 6) return null;
   return {
     level,
     state: { angles: [...candidate.state.angles], gates: [...candidate.state.gates] },
     movesLeft: candidate.movesLeft,
-    history: Array.isArray(candidate.history) ? candidate.history.slice(-30) : [],
+    history: candidate.history.slice(-30).map((entry) => ({ angles: [...entry.angles], gates: [...entry.gates] })),
     status: candidate.status,
-    selectedRing: Math.max(0, Math.min(5, Number(candidate.selectedRing) || 0)),
+    selectedRing: candidate.selectedRing,
   };
 };
 
@@ -87,6 +106,7 @@ const initialState = (demo: boolean): AppState => {
     },
     paused: false,
     settingsOpen: false,
+    preview: null,
     hint: '',
     announcement: '',
   };
@@ -137,7 +157,7 @@ const navigate = (path: string): void => {
   const clean = path === '/demo' ? '/demo' : path;
   window.history.pushState({}, '', clean);
   state = initialState(isDemoRoute());
-  render();
+  render('#main h1');
 };
 
 const titleFor = (path: string): string => {
@@ -168,14 +188,14 @@ const nav = (): string => `
     <a class="wordmark" href="/" data-nav>Gate Shift <span aria-hidden="true">↻</span></a>
     <nav aria-label="Primary navigation">
       <a href="/demo" data-nav>Demo</a>
-      <a href="#how-to-play">How to play</a>
+      <a href="/#how-to-play">How to play</a>
       <a href="/privacy" data-nav>Privacy</a>
     </nav>
   </header>`;
 
 const demoBanner = (): string => state.demo ? `
   <aside class="demo-banner" aria-label="Demo mode">
-    <strong>Demo — sample run, nothing is saved to your game.</strong>
+    <strong>Demo — sample data, nothing is saved.</strong>
     <span>The sample uses separate browser storage.</span>
     <button class="text-button" type="button" data-action="reset-demo">Reset demo</button>
     <button class="text-button" type="button" data-action="start-real">Start for real</button>
@@ -210,15 +230,16 @@ const boardLevelOptions = (): string => {
 
 const dailySeedLabel = (): string => getDailyLevel().name.replace('Daily ', '');
 
-const ringMarkup = (ring: number): string => {
-  const { state: board, selectedRing } = state.run;
+const ringMarkup = (ring: number, board = state.run.state): string => {
+  const { selectedRing } = state.run;
   const angle = board.angles[ring];
   const gate = board.gates[ring];
   const clear = angle === 0 && gate === 0;
   const symbol = tokenSymbols[ring];
   const visualSymbol = state.settings.symbolsOnly ? symbol : symbol;
   const direction = gate === 0 ? 'open' : 'reversed';
-  return `<button type="button" class="ring ${selectedRing === ring ? 'selected' : ''} ${clear ? 'clear' : ''}" data-ring="${ring}" data-angle="${angle}" aria-pressed="${selectedRing === ring}" aria-label="Select ${ringNames[ring]} ring. Token ${symbol}; gate ${direction}; ${clear ? 'clear' : 'not clear'}.">
+  const previewChanged = state.preview && (ring === selectedRing || ring === LINKED_GATE[selectedRing]);
+  return `<button type="button" class="ring ${selectedRing === ring ? 'selected' : ''} ${clear ? 'clear' : ''} ${previewChanged ? 'preview-changed' : ''}" data-ring="${ring}" data-angle="${angle}" data-gate="${gate}" aria-pressed="${selectedRing === ring}" aria-label="Select ${ringNames[ring]} ring. Token ${symbol}; gate ${direction}; ${clear ? 'clear' : 'not clear'}.">
     <span class="ring-number" aria-hidden="true">${ring + 1}</span>
     <span class="gate-marker ${gate === 0 ? 'open' : 'reversed'}" aria-hidden="true">${gate === 0 ? '⊣' : '⊢'}</span>
     <span class="token token-${ring} angle-${angle}" aria-hidden="true">${visualSymbol}</span>
@@ -230,27 +251,38 @@ const gameBoard = (): string => {
   const run = state.run;
   const selected = ringNames[run.selectedRing];
   const inactive = run.status !== 'active' || state.paused;
+  const previewState = state.preview
+    ? applyMove(run.state, { ring: run.selectedRing, direction: state.preview })
+    : run.state;
+  const preview = state.preview ? `<div class="preview-bar" role="status">
+    <p><strong>Preview only — no move used.</strong> ${state.preview === 'clockwise'
+      ? `${selected} turns clockwise and ${ringNames[LINKED_GATE[run.selectedRing]]} gate reverses.`
+      : `${selected} turns counterclockwise. Gates stay as they are.`} ${clearedGates(previewState)} of 6 gates would be clear.</p>
+    <button type="button" class="primary-control" data-action="apply-preview">Take ${formatDirection(state.preview)}</button>
+    <button type="button" data-action="cancel-preview">Cancel preview</button>
+  </div>` : '';
   const hint = state.hint ? `<p class="hint" role="status">${state.hint}</p>` : '';
-  return `<section class="game-shell layout-${run.level.layout}" aria-labelledby="board-heading">
+  return `<section class="game-shell layout-${run.level.layout} ${state.preview ? 'previewing' : ''}" aria-labelledby="board-heading">
     <div class="game-topline">
       <div><p class="eyebrow">${run.level.daily ? 'Daily board' : `Board ${run.level.number}`}</p><h2 id="board-heading">${run.level.name}</h2></div>
       <div class="run-stats" aria-label="Run status"><strong>${run.movesLeft}</strong><span>moves left</span><strong>${clearedGates(run.state)}/6</strong><span>gates clear</span></div>
     </div>
     <p class="board-rule"><span aria-hidden="true">↻</span> Short route turns clockwise and reverses its linked gate. <span aria-hidden="true">↺</span> Long route leaves gates unchanged.</p>
     <div class="board" aria-describedby="board-help">
-      ${Array.from({ length: 6 }, (_, ring) => ringMarkup(ring)).join('')}
+      ${Array.from({ length: 6 }, (_, ring) => ringMarkup(ring, previewState)).join('')}
     </div>
     <p id="board-help" class="sr-only">Select a ring. Use the left and right arrow keys to rotate it. Use up and down arrows to select another ring.</p>
     <div class="controls" aria-label="Game controls">
       <p class="selected-label">Selected: <strong>${selected} ring</strong></p>
-      <button type="button" data-action="counterclockwise" ${inactive ? 'disabled' : ''}><span aria-hidden="true">↺</span> Take long route</button>
-      <button type="button" class="primary-control" data-action="clockwise" ${inactive ? 'disabled' : ''}><span aria-hidden="true">↻</span> Take short route</button>
+      <button type="button" data-action="preview-counterclockwise" aria-pressed="${state.preview === 'counterclockwise'}" ${inactive ? 'disabled' : ''}><span aria-hidden="true">↺</span> Preview long route</button>
+      <button type="button" class="primary-control" data-action="preview-clockwise" aria-pressed="${state.preview === 'clockwise'}" ${inactive ? 'disabled' : ''}><span aria-hidden="true">↻</span> Preview short route</button>
       <button type="button" data-action="undo" ${run.history.length === 0 || state.paused ? 'disabled' : ''}>Undo free move</button>
       <button type="button" data-action="hint" ${inactive ? 'disabled' : ''}>Show next safe move</button>
       <button type="button" data-action="restart">Restart board</button>
       <button type="button" data-action="pause" ${run.status !== 'active' ? 'disabled' : ''}>${state.paused ? 'Resume board' : 'Pause board'}</button>
       <button type="button" data-action="settings" aria-expanded="${state.settingsOpen}" aria-controls="settings-panel">Settings</button>
     </div>
+    ${preview}
     ${hint}
     <p class="status-line" role="status">${state.announcement || statusText(run)}</p>
     ${state.settingsOpen ? settingsPanel() : ''}
@@ -302,20 +334,20 @@ const homePage = (): string => `
     ${boardLevelOptions()}
     <section class="how-to-play" id="how-to-play" aria-labelledby="how-heading">
       <p class="eyebrow">How to play</p><h2 id="how-heading">Plan a finite route</h2>
-      <ol><li><strong>Select a ring.</strong> Tap it, or use Up and Down arrows.</li><li><strong>Choose a route.</strong> Right turns a ring and reverses its linked gate. Left only turns.</li><li><strong>Clear six gates.</strong> Match each token with its open top gate before moves run out.</li></ol><p class="proof-note">Each board is checked for a route that fits its move budget. The phone test profile measures a 60 fps visual loop.</p>
+      <ol><li><strong>Select a ring.</strong> Tap it, or use Up and Down arrows.</li><li><strong>Preview a route.</strong> Check the next ring and gate state before using a move.</li><li><strong>Clear six gates.</strong> Match each token with its open top gate before moves run out.</li></ol><p class="proof-note">Each board is checked for a route that fits its move budget. The phone test profile measures a 60 fps visual loop.</p>
     </section>
-    <section class="plain-section" aria-labelledby="limits-heading"><p class="eyebrow">What stays private</p><h2 id="limits-heading">No account, ranking, or endless mode</h2><p>Progress and settings stay in local browser storage. Gate Shift sends no game data to a server and has no multiplayer mode.</p></section>
+    <section class="plain-section" aria-labelledby="limits-heading"><p class="eyebrow">What stays private</p><h2 id="limits-heading">No account, ranking, or endless mode</h2><p>Progress and settings stay in local browser storage. Gate Shift sends no game data to a server. It is a one-player game.</p></section>
     ${pricing()}
   </main>
   ${footer()}`;
 
 const footer = (): string => `
-  <footer class="site-footer"><p>Gate Shift is a one-player puzzle with short, finite boards.</p><nav aria-label="Footer navigation"><a href="/privacy" data-nav>Privacy</a><a href="/terms" data-nav>Terms</a><a href="https://sociobot.in" rel="noopener noreferrer">Built by Param Factory <span class="sr-only">(opens external site)</span></a></nav><small>Build 1.0.0</small></footer>`;
+  <footer class="site-footer"><p>Gate Shift is a one-player puzzle with short, finite boards.</p><nav aria-label="Footer navigation"><a href="/privacy" data-nav>Privacy</a><a href="/terms" data-nav>Terms</a><a href="https://sociobot.in" rel="noopener noreferrer">Built by Param Factory <span class="sr-only">(opens external site)</span></a></nav><small>Build 1.1.0</small></footer>`;
 
 const legalPage = (kind: 'privacy' | 'terms'): string => {
   const privacy = kind === 'privacy';
   return `${nav()}<main id="main" tabindex="-1" class="legal-page"><p class="eyebrow">Gate Shift</p><h1 tabindex="-1">${privacy ? 'Privacy for Gate Shift players' : 'Terms for Gate Shift players'}</h1>${privacy ? `
-    <p>Gate Shift runs in your browser. It does not use analytics, accounts, advertising, or server-side game profiles.</p>
+    <p>Gate Shift runs in your browser. It does not use analytics, accounts, advertising, or tracking cookies.</p>
     <h2>What stays on your device</h2><p>Your current board, settings, and free-board progress are saved in local browser storage when available. Demo runs use a separate storage key and never read or change your regular game data.</p>
     <h2>What leaves your device</h2><p>No game data leaves your browser. Static files load from the Gate Shift site so the game can open.</p>
     <h2>Delete local data</h2><p>Use your browser’s site-data controls for gate-shift.sociobot.in. In demo mode, select Reset demo.</p>` : `
@@ -327,29 +359,39 @@ const legalPage = (kind: 'privacy' | 'terms'): string => {
 
 const notFoundPage = (): string => `${nav()}<main id="main" tabindex="-1" class="not-found"><p class="eyebrow">404</p><h1 tabindex="-1">This board does not exist</h1><p>The link may be old. Return to the playable board.</p><a class="primary-action link-button" href="/" data-nav>Play Gate Shift</a></main>${footer()}`;
 
-const render = (): void => {
+const render = (focusSelector?: string): void => {
   const path = routePath();
   document.title = titleFor(path);
+  const publicPath = ['/demo', '/privacy', '/terms'].includes(path) ? path : '/';
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', `https://gate-shift.sociobot.in${publicPath}`);
+  document.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.setAttribute('content', `https://gate-shift.sociobot.in${publicPath}`);
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', titleFor(path));
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute('content', titleFor(path));
   root.dataset.calm = String(state.settings.calmMotion);
   root.dataset.symbols = String(state.settings.symbolsOnly);
   root.innerHTML = `<p id="route-live" class="sr-only" aria-live="polite"></p>${path === '/' || path === '/demo' ? homePage() : path === '/privacy' || path === '/terms' ? legalPage(path.slice(1) as 'privacy' | 'terms') : notFoundPage()}`;
   bindEvents();
   const routeLive = document.querySelector<HTMLElement>('#route-live');
   if (routeLive) routeLive.textContent = routeAnnouncement();
+  if (focusSelector) window.setTimeout(() => root.querySelector<HTMLElement>(focusSelector)?.focus(), 0);
 };
 
-const changeRun = (run: GameRun, message: string): void => {
-  state = { ...state, run, hint: '', announcement: message, paused: false };
+const changeRun = (run: GameRun, message: string, focusSelector?: string): void => {
+  state = { ...state, run, preview: null, hint: '', announcement: message, paused: false };
   save();
-  render();
-  if (run.status !== 'active') window.setTimeout(() => document.querySelector<HTMLElement>('.end-panel')?.focus(), 0);
+  render(run.status === 'active' ? focusSelector : '.end-panel');
 };
 
-const rotate = (direction: 'clockwise' | 'counterclockwise'): void => {
+const rotate = (direction: Direction, focusSelector?: string): void => {
   const result = rotateRun(state.run, direction);
   if (result === state.run) return;
   const message = result.status === 'won' ? 'Board complete.' : result.status === 'lost' ? 'The move budget is used.' : `${formatDirection(direction)} taken. ${result.movesLeft} moves left.`;
-  changeRun(result, message);
+  changeRun(result, message, focusSelector);
+};
+
+const showPreview = (direction: Direction): void => {
+  state = { ...state, preview: direction, hint: '', announcement: `${formatDirection(direction)} preview shown. No move used.` };
+  render(`[data-action="preview-${direction}"]`);
 };
 
 const resetDemo = (): void => {
@@ -359,24 +401,24 @@ const resetDemo = (): void => {
   } catch { /* Keep the visible run if storage is blocked. */ }
   state = initialState(true);
   state.announcement = 'Demo reset to the guided practice board.';
-  render();
+  render('[data-action="reset-demo"]');
 };
 
 const showHint = (): void => {
   const solution = solveWithin(state.run.state, state.run.movesLeft);
   if (!solution?.moves.length) {
-    state = { ...state, hint: solution ? 'This board is already clear.' : 'No route fits the remaining budget. Undo a move or restart.' };
+    state = { ...state, preview: null, hint: solution ? 'This board is already clear.' : 'No route fits the remaining budget. Undo a move or restart.' };
   } else {
     const next = solution.moves[0];
-    state = { ...state, hint: `Safe next move: select ${ringNames[next.ring]} ring, then take the ${formatDirection(next.direction)}.` };
+    state = { ...state, preview: null, hint: `Safe next move: select ${ringNames[next.ring]} ring, then take the ${formatDirection(next.direction)}.` };
   }
-  render();
+  render('[data-action="hint"]');
 };
 
 const selectLevel = (id: string): void => {
   const level = getLevel(id);
   if (!level || (!level.free && !level.daily)) return;
-  changeRun(startRun(level), `${level.daily ? 'Daily board' : `Board ${level.number}`} started.`);
+  changeRun(startRun(level), `${level.daily ? 'Daily board' : `Board ${level.number}`} started.`, `[data-level="${level.id}"]`);
 };
 
 const bindEvents = (): void => {
@@ -400,15 +442,15 @@ const bindEvents = (): void => {
       if (swipeStart.ring === Number(ring.dataset.ring) && Math.abs(deltaX) > 32 && Math.abs(deltaX) > Math.abs(deltaY)) {
         didSwipe = true;
         state = { ...state, run: chooseRing(state.run, swipeStart.ring) };
-        rotate(deltaX > 0 ? 'clockwise' : 'counterclockwise');
+        rotate(deltaX > 0 ? 'clockwise' : 'counterclockwise', `[data-ring="${swipeStart.ring}"]`);
       }
       swipeStart = null;
     });
     ring.addEventListener('click', () => {
       if (didSwipe) { didSwipe = false; return; }
-      state = { ...state, run: chooseRing(state.run, Number(ring.dataset.ring)), announcement: `${ringNames[Number(ring.dataset.ring)]} ring selected.` };
+      state = { ...state, run: chooseRing(state.run, Number(ring.dataset.ring)), preview: null, announcement: `${ringNames[Number(ring.dataset.ring)]} ring selected.` };
       save();
-      render();
+      render(`[data-ring="${ring.dataset.ring}"]`);
     });
   });
   root.querySelectorAll<HTMLButtonElement>('[data-level]').forEach((button) => button.addEventListener('click', () => selectLevel(button.dataset.level ?? '')));
@@ -417,13 +459,29 @@ const bindEvents = (): void => {
       case 'try-demo': navigate('/demo'); break;
       case 'start-real': navigate('/'); break;
       case 'reset-demo': resetDemo(); break;
-      case 'clockwise': rotate('clockwise'); break;
-      case 'counterclockwise': rotate('counterclockwise'); break;
-      case 'undo': changeRun(undoRun(state.run), 'Last move undone. It did not cost a move.'); break;
-      case 'restart': changeRun(startRun(state.run.level), 'Board restarted.'); break;
+      case 'preview-clockwise': showPreview('clockwise'); break;
+      case 'preview-counterclockwise': showPreview('counterclockwise'); break;
+      case 'apply-preview': {
+        if (state.preview) rotate(state.preview, `[data-action="preview-${state.preview}"]`);
+        break;
+      }
+      case 'cancel-preview': state = { ...state, preview: null, announcement: 'Preview closed. No move used.' }; render('[data-action="preview-clockwise"]'); break;
+      case 'undo': changeRun(undoRun(state.run), 'Last move undone. It did not cost a move.', '[data-action="undo"]'); break;
+      case 'restart': changeRun(startRun(state.run.level), 'Board restarted.', '[data-action="restart"]'); break;
       case 'hint': showHint(); break;
-      case 'pause': state = { ...state, paused: !state.paused, announcement: state.paused ? 'Board paused.' : 'Board resumed.' }; save(); render(); break;
-      case 'settings': state = { ...state, settingsOpen: !state.settingsOpen }; render(); break;
+      case 'pause': {
+        const willPause = !state.paused;
+        state = { ...state, paused: willPause, preview: null, announcement: willPause ? 'Board paused.' : 'Board resumed.' };
+        save();
+        render(willPause ? '.run-panel [data-action="pause"]' : '[data-action="pause"]');
+        break;
+      }
+      case 'settings': {
+        const willOpen = !state.settingsOpen;
+        state = { ...state, settingsOpen: willOpen, preview: null };
+        render(willOpen ? '#settings-panel [data-setting]' : '[data-action="settings"]');
+        break;
+      }
       case 'next-free': {
         const currentIndex = authoredLevels.findIndex((level) => level.id === state.run.level.id);
         const next = authoredLevels.slice(currentIndex + 1).find((level) => level.free) ?? authoredLevels[0];
@@ -439,7 +497,7 @@ const bindEvents = (): void => {
       : { ...state.settings, symbolsOnly: input.checked };
     state = { ...state, settings, announcement: 'Settings saved in this browser.' };
     save();
-    render();
+    render(`[data-setting="${input.dataset.setting}"]`);
   }));
 };
 
@@ -452,27 +510,41 @@ window.addEventListener('popstate', () => {
 window.addEventListener('keydown', (event) => {
   if (routePath() !== '/' && routePath() !== '/demo' || event.altKey || event.ctrlKey || event.metaKey) return;
   const target = event.target as HTMLElement;
-  if (target.matches('button, a, input, select, textarea')) return;
-  if (event.key === 'ArrowRight') { event.preventDefault(); rotate('clockwise'); }
-  if (event.key === 'ArrowLeft') { event.preventDefault(); rotate('counterclockwise'); }
-  if (event.key === 'ArrowDown') { event.preventDefault(); state = { ...state, run: chooseRing(state.run, state.run.selectedRing + 1), announcement: 'Next ring selected.' }; save(); render(); }
-  if (event.key === 'ArrowUp') { event.preventDefault(); state = { ...state, run: chooseRing(state.run, state.run.selectedRing - 1), announcement: 'Previous ring selected.' }; save(); render(); }
-  if (event.key.toLowerCase() === 'u') { event.preventDefault(); changeRun(undoRun(state.run), 'Last move undone. It did not cost a move.'); }
-  if (event.key.toLowerCase() === 'r') { event.preventDefault(); changeRun(startRun(state.run.level), 'Board restarted.'); }
+  if (target.matches('a, input, select, textarea') || target.matches('button:not([data-ring])')) return;
+  const selectedRing = (): string => `[data-ring="${state.run.selectedRing}"]`;
+  if (event.key === 'ArrowRight') { event.preventDefault(); rotate('clockwise', selectedRing()); }
+  if (event.key === 'ArrowLeft') { event.preventDefault(); rotate('counterclockwise', selectedRing()); }
+  if (event.key === 'ArrowDown') {
+    event.preventDefault();
+    state = { ...state, run: chooseRing(state.run, state.run.selectedRing + 1), preview: null, announcement: 'Next ring selected.' };
+    save();
+    render(`[data-ring="${state.run.selectedRing}"]`);
+  }
+  if (event.key === 'ArrowUp') {
+    event.preventDefault();
+    state = { ...state, run: chooseRing(state.run, state.run.selectedRing - 1), preview: null, announcement: 'Previous ring selected.' };
+    save();
+    render(`[data-ring="${state.run.selectedRing}"]`);
+  }
+  if (event.key.toLowerCase() === 'u') { event.preventDefault(); changeRun(undoRun(state.run), 'Last move undone. It did not cost a move.', selectedRing()); }
+  if (event.key.toLowerCase() === 'r') { event.preventDefault(); changeRun(startRun(state.run.level), 'Board restarted.', selectedRing()); }
 });
 
-document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    stopVisualLoop();
-    if (state.run.status === 'active' && !state.paused && (routePath() === '/' || routePath() === '/demo')) {
-      state = { ...state, paused: true, announcement: 'Board paused while this tab was hidden.' };
-      save();
-      render();
-    }
-  } else if (!document.hidden) {
-    startVisualLoop();
+const pauseForBackground = (): void => {
+  stopVisualLoop();
+  if (state.run.status === 'active' && !state.paused && (routePath() === '/' || routePath() === '/demo')) {
+    state = { ...state, paused: true, preview: null, announcement: 'Board paused while this tab was hidden.' };
+    save();
+    render();
   }
+};
+
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseForBackground();
+  else startVisualLoop();
 });
+document.addEventListener('freeze', pauseForBackground);
+document.addEventListener('resume', startVisualLoop);
 
 if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => undefined));
 

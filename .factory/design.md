@@ -38,27 +38,31 @@ information sections use open space rather than repeated feature cards.
 
 ## Interaction and motion
 
-Selecting a ring gives it a coral outline. A short clockwise route reverses a
-linked gate; the long counterclockwise route does not. Ring/token transitions
-use 180 ms transform and color changes. A clamped 60 Hz fixed-step visual loop
-is paused when the tab is hidden. The **Use calm motion** setting and
+Selecting a ring gives it a coral outline. Players preview either route before
+spending a move. A preview shows the next token and gate positions inside a
+pale brass frame. A short clockwise route reverses a linked gate; the long
+counterclockwise route does not. Ring/token transitions use 180 ms transform
+and color changes. A clamped 60 Hz fixed-step visual loop is paused when the
+tab is hidden. The **Use calm motion** setting and
 `prefers-reduced-motion` reduce transitions to an instant state. There are no
 flashes or looping visual effects.
 
 ## Board content and difficulty
 
-Twenty authored boards use three fixed layouts: arc, ladder, and cluster.
-Boards 1–3 teach selection, one linked reversal, then a six-gate route. Later
-boards add longer mixed sequences and tighter budgets. A daily seed chooses a
-deterministic challenge from the same mechanics. Each board is checked by a
-breadth-first solver before it is offered; the listed move budget is at least
-one valid route. The game is one-player only. It has no endless generator,
-social ranking, or multiplayer mode.
+Twenty authored boards use three fixed layouts: arc, ladder, and cluster. All
+20 logical start states are different. Minimum solutions rise from 6 moves on
+Board 1 to 24 on Board 20; Boards 13 and 14 both require 18 moves but use
+different states. Early boards allow four spare moves. The last five allow
+one. A daily seed chooses a deterministic challenge from the same mechanics.
+Six independent breadth-first searches prove each shortest route exactly. The
+game is one-player only. It has no endless generator, social ranking, or
+multiplayer mode.
 
 ## Asset provenance
 
 All visual assets are original, hand-authored SVG and CSS in this repository:
-`public/favicon.svg`, `public/apple-touch-icon.svg`, and
-`public/social-card.svg`, plus the CSS ring illustrations. No stock art,
-generated images, external images, or third-party assets are used. The social
-card is a 1200×630 SVG composed from the same ring, gate, and token geometry.
+`public/sf-gate-shift-favicon.svg`,
+`public/sf-gate-shift-apple-touch-icon.svg`, and
+`public/sf-gate-shift-social-card.svg`, plus the CSS ring illustrations. No
+stock art, generated images, external images, or third-party assets are used.
+The social card is a 1200×630 SVG built from the ring, gate, and token geometry.

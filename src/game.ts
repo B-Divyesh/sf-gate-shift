@@ -63,16 +63,6 @@ export const applyMove = (state: PuzzleState, move: Move): PuzzleState => {
 export const applyMoves = (state: PuzzleState, moves: Move[]): PuzzleState =>
   moves.reduce((current, move) => applyMove(current, move), cloneState(state));
 
-const move = (ring: number, direction: Direction): Move => ({ ring, direction });
-
-const SCRAMBLES: Move[][] = [
-  [move(0, 'clockwise'), move(1, 'counterclockwise'), move(2, 'clockwise'), move(4, 'counterclockwise')],
-  [move(5, 'clockwise'), move(3, 'clockwise'), move(0, 'counterclockwise'), move(2, 'clockwise'), move(1, 'counterclockwise')],
-  [move(4, 'clockwise'), move(1, 'clockwise'), move(5, 'counterclockwise'), move(2, 'clockwise'), move(0, 'clockwise'), move(3, 'counterclockwise')],
-  [move(2, 'clockwise'), move(0, 'clockwise'), move(4, 'clockwise'), move(1, 'counterclockwise'), move(5, 'clockwise'), move(3, 'counterclockwise'), move(0, 'clockwise')],
-  [move(3, 'clockwise'), move(5, 'clockwise'), move(2, 'counterclockwise'), move(4, 'clockwise'), move(1, 'clockwise'), move(0, 'counterclockwise'), move(2, 'clockwise'), move(5, 'counterclockwise')],
-];
-
 const LEVEL_NAMES = [
   'First signal', 'Two-way gate', 'Linked turns', 'Crossed route', 'Gate pairs',
   'Offset loop', 'Return path', 'Six signals', 'Double reversal', 'Narrow budget',
@@ -80,30 +70,47 @@ const LEVEL_NAMES = [
   'Counter turn', 'Cross current', 'Tight relay', 'Final junction', 'Clear all gates',
 ];
 
-export const authoredLevels: Level[] = LEVEL_NAMES.map((name, index) => {
-  const rounds = 1 + Math.floor(index / SCRAMBLES.length);
-  const source = SCRAMBLES[index % SCRAMBLES.length];
-  const altered = source.map((entry, position) => {
-    if (rounds === 1 || position % rounds !== 0) return entry;
-    return move((entry.ring + rounds + index) % RING_COUNT, entry.direction);
-  });
-  const repeated = Array.from({ length: rounds }, (_, round) =>
-    altered.map((entry, position) =>
-      position === altered.length - 1 && round % 2 === 1
-        ? move((entry.ring + round) % RING_COUNT, entry.direction)
-        : entry,
-    ),
-  ).flat();
-  return {
-    id: `board-${index + 1}`,
-    number: index + 1,
-    name,
-    layout: (['arc', 'ladder', 'cluster'] as const)[index % 3],
-    start: applyMoves(goalState(), repeated),
-    budget: Math.min(26, 10 + Math.ceil(repeated.length * 1.45)),
-    free: index < 3,
-  };
-});
+const move = (ring: number, direction: Direction): Move => ({ ring, direction });
+
+/**
+ * Twenty deliberately authored, logically distinct starts. Their shortest
+ * routes rise from 6 moves on Board 1 to 24 on Board 20. The spare moves fall
+ * from four on early boards to one on the last five boards.
+ */
+const LEVEL_STARTS: PuzzleState[] = [
+  { angles: [0, 0, 0, 0, 1, 3], gates: [1, 0, 0, 0, 1, 1] },
+  { angles: [0, 0, 0, 3, 0, 2], gates: [1, 0, 1, 1, 0, 0] },
+  { angles: [0, 1, 0, 1, 0, 2], gates: [1, 0, 0, 0, 1, 0] },
+  { angles: [2, 3, 1, 3, 0, 0], gates: [0, 0, 0, 1, 1, 0] },
+  { angles: [0, 0, 3, 3, 2, 0], gates: [1, 0, 0, 1, 1, 0] },
+  { angles: [3, 3, 1, 3, 1, 2], gates: [1, 1, 0, 0, 1, 0] },
+  { angles: [0, 0, 2, 1, 1, 0], gates: [1, 1, 1, 0, 0, 1] },
+  { angles: [1, 2, 0, 1, 1, 0], gates: [1, 0, 1, 0, 1, 1] },
+  { angles: [3, 2, 1, 0, 1, 1], gates: [1, 0, 1, 0, 1, 0] },
+  { angles: [1, 3, 3, 2, 3, 3], gates: [0, 1, 0, 0, 0, 1] },
+  { angles: [2, 1, 3, 2, 0, 2], gates: [1, 1, 1, 0, 0, 0] },
+  { angles: [2, 1, 2, 1, 2, 1], gates: [1, 0, 1, 1, 1, 0] },
+  { angles: [2, 1, 3, 1, 1, 2], gates: [1, 0, 1, 1, 1, 0] },
+  { angles: [3, 2, 1, 2, 3, 3], gates: [1, 0, 0, 1, 1, 1] },
+  { angles: [2, 1, 2, 1, 2, 1], gates: [1, 1, 1, 0, 1, 1] },
+  { angles: [1, 2, 2, 3, 2, 2], gates: [0, 1, 1, 1, 0, 1] },
+  { angles: [2, 1, 2, 2, 2, 2], gates: [1, 1, 1, 1, 0, 1] },
+  { angles: [2, 2, 1, 2, 2, 1], gates: [1, 1, 1, 1, 1, 1] },
+  { angles: [2, 2, 1, 2, 2, 2], gates: [1, 1, 1, 1, 1, 1] },
+  { angles: [2, 2, 2, 2, 2, 2], gates: [1, 1, 1, 1, 1, 1] },
+];
+
+const LEVEL_BUDGETS = [10, 11, 12, 13, 14, 15, 15, 16, 17, 18, 18, 19, 20, 20, 21, 21, 22, 23, 24, 25];
+
+export const authoredLevels: Level[] = LEVEL_NAMES.map((name, index) => ({
+  id: `board-${index + 1}`,
+  number: index + 1,
+  name,
+  layout: (['arc', 'ladder', 'cluster'] as const)[index % 3],
+  start: cloneState(LEVEL_STARTS[index]),
+  budget: LEVEL_BUDGETS[index],
+  free: index < 3,
+}));
 
 const DAY_MS = 86_400_000;
 const dateSeed = (date: Date): number => Math.floor(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()) / DAY_MS);
@@ -141,28 +148,42 @@ export const getDailyLevel = (date = new Date()): Level => {
 
 export type Solution = { moves: Move[]; explored: number } | null;
 
-/** Breadth-first proof that a board can end within the published move budget. */
+/**
+ * Exact shortest-path proof. Each ring controls only its own angle and one
+ * uniquely linked gate, so six small breadth-first searches can be combined
+ * without changing the result or depending on move order.
+ */
 export const solveWithin = (start: PuzzleState, budget: number): Solution => {
   if (isComplete(start)) return { moves: [], explored: 1 };
-  const seen = new Set<string>([stateKey(start)]);
-  const queue: { state: PuzzleState; moves: Move[] }[] = [{ state: cloneState(start), moves: [] }];
-  let cursor = 0;
-  while (cursor < queue.length) {
-    const current = queue[cursor++];
-    if (current.moves.length >= budget) continue;
-    for (let ring = 0; ring < RING_COUNT; ring += 1) {
+  const moves: Move[] = [];
+  let explored = 0;
+  for (let ring = 0; ring < RING_COUNT; ring += 1) {
+    const initial = { angle: start.angles[ring], gate: start.gates[LINKED_GATE[ring]], moves: [] as Move[] };
+    const queue = [initial];
+    const seen = new Set<string>([`${initial.angle}:${initial.gate}`]);
+    let cursor = 0;
+    let ringSolution: Move[] | null = null;
+    while (cursor < queue.length) {
+      const current = queue[cursor++];
+      explored += 1;
+      if (current.angle === 0 && current.gate === 0) {
+        ringSolution = current.moves;
+        break;
+      }
       for (const direction of ['clockwise', 'counterclockwise'] as const) {
-        const next = applyMove(current.state, { ring, direction });
-        const key = stateKey(next);
+        const angle = asAngle(current.angle + (direction === 'clockwise' ? 1 : -1));
+        const gate = direction === 'clockwise' ? (current.gate === 0 ? 1 : 0) : current.gate;
+        const key = `${angle}:${gate}`;
         if (seen.has(key)) continue;
-        const moves = [...current.moves, { ring, direction }];
-        if (isComplete(next)) return { moves, explored: seen.size + 1 };
         seen.add(key);
-        queue.push({ state: next, moves });
+        queue.push({ angle, gate, moves: [...current.moves, { ring, direction }] });
       }
     }
+    if (!ringSolution) return null;
+    moves.push(...ringSolution);
   }
-  return null;
+  if (moves.length > budget || !isComplete(applyMoves(start, moves))) return null;
+  return { moves, explored };
 };
 
 export type RunStatus = 'active' | 'won' | 'lost';

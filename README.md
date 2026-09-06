@@ -2,8 +2,8 @@
 
 Gate Shift is a one-player browser logic puzzle for players who want a short,
 finite board instead of an endless loop. Rotate six token rings through fixed
-gates, plan linked gate reversals, use undo without penalty, and finish before
-the move budget ends. An intended board session is 4–10 minutes.
+gates, preview linked gate reversals, use undo without penalty, and finish
+before the move budget ends.
 
 Live: <https://gate-shift.sociobot.in>
 
@@ -15,9 +15,10 @@ has no social ranking, and has no endless mode.
 
 ## Play
 
-Open the game and select a ring. Take the short clockwise route to turn it and
-reverse its linked gate, or take the long counterclockwise route to turn it
-without a reversal. Clear all six gates before the listed move budget runs out.
+Open the game and select a ring. Preview the short clockwise route to see its
+linked gate reversal. Preview the long counterclockwise route to see the ring
+turn with no gate change. Apply either preview, then clear all six gates before
+the move budget runs out.
 
 - Touch/mouse: tap a ring, then choose a route. Swipe right or left on a ring
   to take the short or long route.
@@ -26,16 +27,18 @@ without a reversal. Clear all six gates before the listed move budget runs out.
 - The game pauses when the tab is hidden. Progress and settings stay in local
   browser storage when it is available.
 
-The free core includes the tutorial and two further authored boards. The
-complete set contains 20 authored boards for **$8 once**; it adds 17 boards and
-does not include a subscription, ads, or move sales. Billing registration is
-currently pending, so no purchase flow is shown or claimed to work.
+The free core includes the tutorial and two further authored boards. The 20
+distinct boards have a measured difficulty curve and fixed move budgets. The
+complete set costs **$8 once** and adds 17 boards. It has no subscription, ads,
+or move sales. Billing registration is pending, so no purchase flow is shown
+or claimed to work.
 
 ## Demo
 
 Use **Try it with sample data** or open `/demo`. It starts a guided `First
 signal` board in a separate `demo:gate-shift:*` browser-storage namespace.
-The visible demo banner offers **Reset demo** and **Start for real**. See
+The visible demo banner says that sample data is not saved. It offers **Reset
+demo** and **Start for real**. See
 [.factory/demo.md](.factory/demo.md) for the sandbox contract.
 
 ## Develop
@@ -43,7 +46,7 @@ The visible demo banner offers **Reset demo** and **Start for real**. See
 Prerequisite: Node.js 20 or newer.
 
 ```sh
-npm install
+npm ci
 npm run dev
 ```
 
@@ -62,22 +65,20 @@ npm run build
 clean Vite server, plays the demo in desktop and phone Chromium contexts, tests
 the published claims, checks routes, and runs axe serious/critical checks.
 Each command recorded in [.factory/claims.json](.factory/claims.json) can also
-run independently from a clean checkout after `npm install`.
+run independently from a clean checkout after `npm ci`.
 
 ## Deploy
 
-`npm run build` writes the static site to `dist/`. The repository includes
-`staticwebapp.config.json` for static deployment: SPA navigation fallback,
-security headers, a separate 404 page, and immutable static assets. Deployment
-is handled by the factory; do not add credentials or payment-provider keys to
-this repository.
+`npm run build` writes the static site and `staticwebapp.config.json` to
+`dist/`. The configuration supplies SPA fallback, security headers, a separate
+404 page, and immutable hashed assets. Deployment is handled by the factory.
+Do not add credentials or payment-provider keys to this repository.
 
 ## Privacy and legal pages
 
-The game has no analytics, accounts, third-party scripts, or server-side game
-profiles. Read the deployed [/privacy](/privacy) and [/terms](/terms) pages for
-details. Local browser storage can be removed through browser site-data
-controls.
+The game has no analytics, accounts, ads, tracking cookies, or third-party
+scripts. Read the deployed [/privacy](/privacy) and [/terms](/terms) pages for
+details. Local browser storage can be removed through browser site-data controls.
 
 ## Product records
 
