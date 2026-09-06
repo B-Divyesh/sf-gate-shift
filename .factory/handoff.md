@@ -80,3 +80,12 @@ activation claim. The copied catalog description is at
 The game is static and one-player, so backend, tenant, SQLite, health, and
 rate-limit checks do not apply. Multiplayer is not advertised. No paid
 deliverable was removed or made free.
+
+At 2026-09-06T02:37:56Z, the HTTPS host was still serving the previous
+`style-BYbrIib-.css` bundle (last modified 01:42 UTC), not this repair's
+`style-BoTSxxXH.css` bundle. The product deployment token is absent and no
+repository deployment workflow exists, so direct publishing would require
+out-of-scope infrastructure access. The factory must publish the pushed
+implementation before a fresh live desktop and phone cold check can be
+claimed. Local candidate checks and the fresh clean-clone claim run above are
+complete.
