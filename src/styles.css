@@ -158,15 +158,15 @@ main:focus, h1:focus, .end-panel:focus { outline: none; }
   .site-header { min-height: 62px; }
   .site-header nav { gap: .75rem; }
   .site-header nav a { font-size: .85rem; }
-  .first-screen { display: flex; flex-direction: column; gap: 1.15rem; min-height: auto; padding-top: 1rem; }
+  .first-screen { display: flex; flex-direction: column; gap: .8rem; min-height: auto; padding-top: .5rem; }
   .intro-copy { display: contents; }
-  .intro-copy > .eyebrow { order: 0; margin-bottom: -.4rem; }
+  .intro-copy > .eyebrow { display: none; }
   .intro-copy > h1 { order: 1; margin-bottom: 0; }
   .intro-copy > .intro { order: 2; margin-bottom: 0; }
   .intro-copy > .intro-actions { order: 3; margin-block: .2rem; }
   .intro-copy > .facts { order: 4; margin-block: .1rem; }
   .first-game { order: 5; width: 100%; }
-  h1 { max-width: 13ch; }
+  h1 { max-width: 100%; font-size: clamp(2.15rem, 10vw, 2.75rem); }
   .first-game { margin-inline: -4px; }
   .game-shell { border-radius: .7rem; }
   .board { gap: .55rem; padding-inline: .2rem; }

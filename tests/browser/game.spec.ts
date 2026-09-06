@@ -35,7 +35,7 @@ test('the first screen names the play, states three facts, and shows the game', 
     const factsBox = await page.locator('.facts').boundingBox();
     const boardBox = await page.locator('.first-game').boundingBox();
     expect(factsBox && factsBox.y + factsBox.height).toBeLessThanOrEqual(viewportHeight);
-    expect(boardBox?.y).toBeLessThan(viewportHeight);
+    expect(boardBox?.y).toBeLessThanOrEqual(viewportHeight - 120);
   }
   await page.waitForTimeout(250);
   expect(consoleErrors).toEqual([]);
