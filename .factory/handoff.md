@@ -5,6 +5,7 @@
 - Live URL: <https://gate-shift.sociobot.in>
 - Live implementation SHA: `90c212baeeff94fd6f413d5b5c889add5ace509c`
 - QA-only commit after the deployed bundle: `52704422a6ea2db2370ba62feadc2ef131d7046f`
+- Documentation and evidence SHA: `48e1dc496cd3ab9356ff0b4f3958a3216af3702c`
 
 The implementation repairs every finding in
 [`verification-1.md`](verification-1.md). Gate Shift is a deterministic,
